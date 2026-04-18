@@ -3,8 +3,7 @@ export type PlanType = 'free' | 'pro' | 'enterprise';
 export interface Tenant {
   id: string;
   name: string;
-  slug: string;
-  settings: Record<string, unknown>;
+  slug: string | null;
   plan_type: PlanType;
   created_at: string;
   updated_at: string;
@@ -27,12 +26,12 @@ export type Database = {
       tenants: {
         Row: Tenant;
         Insert: Omit<Tenant, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Tenant, 'id'>>;
+        Update: Partial<Omit<Tenant, 'id' | 'created_at'>>;
       };
       profiles: {
         Row: Profile;
         Insert: Omit<Profile, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Profile, 'id'>>;
+        Update: Partial<Omit<Profile, 'id' | 'created_at'>>;
       };
     };
   };
