@@ -1,0 +1,24 @@
+# Google Drive Sync Report
+Generated: 2025-04-17
+
+## Status: CONNECTED
+
+### Test Results:
+- Token.json: ✅ Valid
+- Google Drive API: ✅ Connected
+
+### Files Found (relative to '46' or 'strategy'):
+1. "00_CEO_Office & Strategy (Il Cervello)" - Folder
+2. "2025_Manipura_Master_Strategy" - Document
+3. Various files containing "46" but NOT from docs_strategy folder
+
+### Issue:
+No "docs_strategy" folder found. Possible causes:
+- Folder has different name
+- Folder is in Shared Drive
+- Different parent folder name
+
+### Next Steps:
+1. Verify exact folder name on Google Drive
+2. Check if folder is in Shared Drive (need additional scope)
+3. Provide exact folder ID if known
