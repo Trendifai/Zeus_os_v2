@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RefreshCw, CheckCircle, Mail, CreditCard, Hash, Network, GitBranch, FileText, HardDrive, Send, GitPullRequest, GraduationCap } from 'lucide-react';
 import ScientificPapersConnector from './ScientificPapersConnector';
+import { discoverCapabilities, type RepoDiscoveryResult } from '@/lib/repo-mapper';
 
 interface ConnectorStatus {
   id: string;
@@ -29,6 +30,8 @@ function ConnectorsHubInner() {
 
   const [connectors, setConnectors] = useState<ConnectorStatus[]>([]);
   const [modalConnector, setModalConnector] = useState<string | null>(null);
+  const [repoDiscovery, setRepoDiscovery] = useState<RepoDiscoveryResult | null>(null);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     if (successParam) {
@@ -42,13 +45,39 @@ function ConnectorsHubInner() {
     }
   }, [successParam]);
 
-  const handleConnect = (id: string) => {
-    if (id === 'github') {
-      window.location.href = '/api/connectors/github/login';
-      return;
+  const handleGitHubScan = async () => {
+    setScanning(true);
+    try {
+      const discovery = await discoverCapabilities('ZEUS_AGENTIA_V2');
+      setRepoDiscovery(discovery);
+      setConnectors(prev => {
+        const exists = prev.find(c => c.id === 'github');
+        if (exists) return prev;
+        return [...prev, { id: 'github', connected: true }];
+      });
+      alert(`🚀 REPO SCAN COMPLETATA!\n\n🎯 Skills/Agents: ${discovery.total_skills}\n⚙️ Configs: ${discovery.total_configs}\n📚 Docs: ${discovery.total_docs}\n\nTotale capacità: ${discovery.capabilities.length}`);
+    } catch (err) {
+      console.error('Scan error:', err);
+      alert('Errore durante la scansione');
+    } finally {
+      setScanning(false);
     }
-    setModalConnector(id);
   };
+
+  const handleRescan = async () => {
+    setScanning(true);
+    try {
+      const discovery = await discoverCapabilities('ZEUS_AGENTIA_V2');
+      setRepoDiscovery(discovery);
+      alert(`🔄 RESCAN COMPLETATO!\n\n🎯 Skills/Agents: ${discovery.total_skills}\n⚙️ Configs: ${discovery.total_configs}\n📚 Docs: ${discovery.total_docs}`);
+    } catch (err) {
+      console.error('Rescan error:', err);
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const isGitHubConnected = connectors.find(c => c.id === 'github')?.connected;
 
   return (
     <>
@@ -95,13 +124,32 @@ function ConnectorsHubInner() {
                     Scollega
                   </a>
                 ) : connector.id === 'github' ? (
-                  <button
-                    onClick={() => alert('🗺️ ROADMAP TECNICA:\n\n1. Creare OAuth App su GitHub Developer Settings\n2. Configurare Webhook per eventi Push/PR\n3. Implementare GitHub API per analisi codice\n4. Integrare con Vector DB per embedding\n\nStato: Fase 1 Completata (UI), Fase 2-4 In Sviluppo')}
-                    className="flex items-center justify-center gap-1 w-full py-1.5 text-xs border border-amber-400/30 rounded text-amber-400 hover:bg-amber-400/10 transition-colors"
-                  >
-                    <GitPullRequest className="w-3 h-3" />
-                    In Sviluppo...
-                  </button>
+                  isGitHubConnected ? (
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={handleRescan}
+                        disabled={scanning}
+                        className="flex items-center justify-center gap-1 w-full py-1.5 text-xs border border-green-400/30 rounded text-green-400 hover:bg-green-400/10 transition-colors"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${scanning ? 'animate-spin' : ''}`} />
+                        {scanning ? 'Scanning...' : 'Rescan'}
+                      </button>
+                      {repoDiscovery && (
+                        <div className="text-xs text-zinc-500 text-center">
+                          {repoDiscovery.repo_name}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleGitHubScan}
+                      disabled={scanning}
+                      className="flex items-center justify-center gap-1 w-full py-1.5 text-xs border border-green-400/30 rounded text-green-400 hover:bg-green-400/10 transition-colors"
+                    >
+                      <GitPullRequest className="w-3 h-3" />
+                      {scanning ? 'Scanning...' : 'Scansiona Repo'}
+                    </button>
+                  )
                 ) : (
                   <button
                     onClick={() => alert(`🗺️ ROADMAP ${connector.name.toUpperCase()}:\n\nAttualmente in fase di analisi.\nrichiede: API Key + OAuth Setup.\n\nJarvis: "Attiva OAuth prima di procedere."`)}

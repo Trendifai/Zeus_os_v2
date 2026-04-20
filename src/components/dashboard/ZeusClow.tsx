@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Paperclip, Wand2, Send, Loader2 } from 'lucide-react';
+import { Paperclip, Wand2, Send, Loader2, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { executeWithOrchestrator } from '@/app/actions/orchestrator';
@@ -13,6 +13,7 @@ interface ZeusClowProps {
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  hasCode?: boolean;
 }
 
 export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
@@ -28,6 +29,37 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
   const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
+
+  const hasCodeBlock = (content: string): boolean => {
+    return content.includes('```') || content.includes('function ') || content.includes('const ') || content.includes('export ');
+  };
+
+  const extractCode = (content: string): string => {
+    const codeBlockMatch = content.match(/```(?:typescript|javascript|ts|js|python|py)?\n([\s\S]*?)```/);
+    if (codeBlockMatch) return codeBlockMatch[1];
+    
+    const lines = content.split('\n');
+    const codeLines = lines.filter(line => 
+      line.includes('function ') || 
+      line.includes('const ') || 
+      line.includes('export ') ||
+      line.includes('import ') ||
+      line.includes('class ')
+    );
+    
+    return codeLines.length > 0 ? codeLines.join('\n') : content;
+  };
+
+  const handleDownloadCode = (content: string) => {
+    const code = extractCode(content);
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'jarvis-plugin.ts';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -114,16 +146,18 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
               <p className="text-zinc-600 text-xs mt-1">Digita per iniziare</p>
             </div>
           )}
-          {messages.map((msg, idx) => (
+          {messages.map((msg, idx) => {
+            const hasCode = hasCodeBlock(msg.content);
+            return (
             <div
               key={idx}
               className={`p-4 rounded-xl text-sm leading-relaxed ${
                 msg.role === 'user'
                   ? 'bg-zinc-800/60 text-zinc-300 ml-8 border border-zinc-700/30'
-                  : 'bg-gradient-to-br from-zinc-900/80 to-zinc-800/40 text-zinc-200 mr-8 border border-amber-400/10 overflow-hidden'
+                  : 'bg-gradient-to-br from-zinc-900/80 to-zinc-800/40 text-zinc-200 mr-8 border border-amber-400/10'
               }`}
             >
-<div className="overflow-y-auto max-h-96">
+              <div className="overflow-y-auto max-h-96">
                 <div className="prose prose-invert prose-sm max-w-none
                   prose-headings:text-amber-400 prose-headings:font-semibold prose-headings:mb-2
                   prose-p:text-zinc-300 prose-p:mb-3 prose-p:leading-relaxed
@@ -138,8 +172,30 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
                   </ReactMarkdown>
                 </div>
               </div>
+              {hasCode && msg.role === 'assistant' && (
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => handleDownloadCode(msg.content)}
+                    className="flex items-center gap-2 px-3 py-2 text-xs bg-amber-400/10 text-amber-400 rounded-lg hover:bg-amber-400/20 transition-colors"
+                  >
+                    <Download className="w-3 h-3" />
+                    Download Plugin
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(extractCode(msg.content));
+                      alert('Codice copiato! Usa "PUSH TO GIT" per salvare su GitHub');
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-xs bg-zinc-700/30 text-zinc-300 rounded-lg hover:bg-zinc-700/50 transition-colors"
+                  >
+                    <Download className="w-3 h-3" />
+                    Push to Git
+                  </button>
+                </div>
+              )}
             </div>
-          ))}
+            );
+          })}
           {isLoading && (
             <div className="p-3 rounded-xl text-sm bg-zinc-900/60 text-amber-400 mr-8 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />

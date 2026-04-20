@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import ConnectorsHub from '@/components/dashboard/ConnectorsHub';
 import MemoryVault from '@/components/dashboard/MemoryVault';
+import ActiveKnowledgeMap from '@/components/dashboard/ActiveKnowledgeMap';
 import { Crown, Zap, Brain, MessageSquare, User, Lightbulb } from 'lucide-react';
 
 function NPUMonitor() {
@@ -153,6 +154,8 @@ export default async function DashboardPage() {
       </div>
 
       <MemoryVault />
+
+      <ActiveKnowledgeMap />
 
       <div className="bg-zinc-900/50 border border-amber-400/20 rounded-xl p-6">
         <div className="flex items-center gap-3 mb-4">
