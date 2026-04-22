@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dynamic Workspace</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-fixed-variant": "#653e00",
+                        "secondary-fixed-dim": "#c8c6c9",
+                        "tertiary-container": "#1abdff",
+                        "inverse-primary": "#855300",
+                        "on-error": "#690005",
+                        "outline": "#a08e7a",
+                        "primary-container": "#f59e0b",
+                        "secondary-fixed": "#e4e1e5",
+                        "surface-container": "#1e2023",
+                        "on-secondary": "#303033",
+                        "secondary": "#c8c6c9",
+                        "surface-dim": "#121316",
+                        "on-tertiary": "#00344a",
+                        "background": "#121316",
+                        "surface-container-highest": "#333538",
+                        "secondary-container": "#47464a",
+                        "on-primary-container": "#613b00",
+                        "primary": "#ffc174",
+                        "outline-variant": "#534434",
+                        "on-surface-variant": "#d8c3ad",
+                        "inverse-surface": "#e2e2e6",
+                        "tertiary-fixed-dim": "#7fd0ff",
+                        "on-primary": "#472a00",
+                        "on-secondary-container": "#b6b4b8",
+                        "on-error-container": "#ffdad6",
+                        "tertiary": "#8fd5ff",
+                        "surface-bright": "#38393c",
+                        "on-background": "#e2e2e6",
+                        "surface": "#121316",
+                        "on-secondary-fixed": "#1b1b1e",
+                        "on-tertiary-fixed": "#001e2d",
+                        "surface-container-low": "#1a1c1f",
+                        "on-primary-fixed": "#2a1700",
+                        "error": "#ffb4ab",
+                        "on-surface": "#e2e2e6",
+                        "tertiary-fixed": "#c5e7ff",
+                        "surface-container-high": "#282a2d",
+                        "primary-fixed-dim": "#ffb95f",
+                        "error-container": "#93000a",
+                        "on-tertiary-container": "#004966",
+                        "on-secondary-fixed-variant": "#47464a",
+                        "surface-variant": "#333538",
+                        "surface-container-lowest": "#0c0e11",
+                        "primary-fixed": "#ffddb8",
+                        "inverse-on-surface": "#2f3034",
+                        "on-tertiary-fixed-variant": "#004c6a",
+                        "surface-tint": "#ffb95f"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "sidebar-width": "260px",
+                        "container-padding": "1.5rem",
+                        "panel-gap": "1px",
+                        "handle-width": "2px",
+                        "element-gap": "0.75rem"
+                    },
+                    fontFamily: {
+                        "body": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "monospace": ["ui-monospace", "SFMono-Regular"],
+                        "h2": ["Manrope"],
+                        "h1": ["Manrope"]
+                    },
+                    fontSize: {
+                        "body": ["14px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }],
+                        "label-caps": ["11px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "700" }],
+                        "monospace": ["13px", { lineHeight: "20px", fontWeight: "400" }],
+                        "h2": ["18px", { lineHeight: "24px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "h1": ["24px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body text-body h-screen w-full flex overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Left Sidebar (SideNavBar 1) -->
+<aside class="flex flex-col h-screen left-0 top-0 pt-12 docked w-64 border-r border-zinc-800 bg-zinc-900/40 font-manrope text-sm font-medium z-10 shrink-0 relative">
+<div class="px-4 mb-8">
+<h1 class="text-amber-500 font-black font-h1 text-h1">Workspace</h1>
+<p class="text-zinc-500 font-body text-body mt-1">Management</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1 w-full mt-4">
+<!-- Active Tab: CRM -->
+<div class="group flex items-center justify-between border-l-2 border-amber-500 text-amber-500 bg-zinc-800/40 py-2 px-4 hover:border-amber-500/50 cursor-pointer w-full transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">database</span>
+<span>CRM</span>
+</div>
+<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:text-amber-400 transition-colors" title="Open">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+<button class="p-1 hover:text-amber-400 transition-colors" title="Split">
+<span class="material-symbols-outlined text-[16px]">splitscreen</span>
+</button>
+</div>
+</div>
+<!-- Inactive Tab: Clienti -->
+<div class="group flex items-center justify-between text-zinc-500 py-2 px-4 hover:text-zinc-200 hover:bg-zinc-800/20 transition-all cursor-pointer w-full border-l-2 border-transparent">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">group</span>
+<span>Clienti</span>
+</div>
+<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:text-zinc-100 transition-colors" title="Open">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+<button class="p-1 hover:text-zinc-100 transition-colors" title="Split">
+<span class="material-symbols-outlined text-[16px]">splitscreen</span>
+</button>
+</div>
+</div>
+<!-- Inactive Tab: Fatture -->
+<div class="group flex items-center justify-between text-zinc-500 py-2 px-4 hover:text-zinc-200 hover:bg-zinc-800/20 transition-all cursor-pointer w-full border-l-2 border-transparent">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span>Fatture</span>
+</div>
+<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:text-zinc-100 transition-colors" title="Open">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+<button class="p-1 hover:text-zinc-100 transition-colors" title="Split">
+<span class="material-symbols-outlined text-[16px]">splitscreen</span>
+</button>
+</div>
+</div>
+<!-- Inactive Tab: Funnel Vendita -->
+<div class="group flex items-center justify-between text-zinc-500 py-2 px-4 hover:text-zinc-200 hover:bg-zinc-800/20 transition-all cursor-pointer w-full border-l-2 border-transparent">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">filter_alt</span>
+<span>Funnel Vendita</span>
+</div>
+<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:text-zinc-100 transition-colors" title="Open">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+<button class="p-1 hover:text-zinc-100 transition-colors" title="Split">
+<span class="material-symbols-outlined text-[16px]">splitscreen</span>
+</button>
+</div>
+</div>
+</nav>
+</aside>
+<!-- Main Workspace (Dynamic Panels Area) -->
+<main class="flex-1 flex h-full overflow-hidden bg-background">
+<!-- Panel 1 -->
+<section class="flex-1 flex flex-col h-full bg-surface-dim min-w-0">
+<!-- Panel Tabs -->
+<div class="flex items-center border-b border-surface-variant bg-surface-container-lowest overflow-x-auto no-scrollbar">
+<!-- Active Tab -->
+<button class="flex items-center gap-2 px-4 py-2 text-amber-500 border-b-2 border-amber-500 bg-surface-container/30 transition-colors">
+<span class="material-symbols-outlined text-[16px]">database</span>
+<span class="font-medium whitespace-nowrap">CRM</span>
+<span class="material-symbols-outlined text-[14px] hover:bg-zinc-800 rounded-full p-0.5 ml-2">close</span>
+</button>
+<!-- Inactive Tab -->
+<button class="flex items-center gap-2 px-4 py-2 text-zinc-500 border-b-2 border-transparent hover:bg-surface-container/20 hover:text-zinc-300 transition-colors">
+<span class="material-symbols-outlined text-[16px]">group</span>
+<span class="font-medium whitespace-nowrap">Clienti</span>
+<span class="material-symbols-outlined text-[14px] opacity-0 hover:opacity-100 hover:bg-zinc-800 rounded-full p-0.5 ml-2 transition-opacity">close</span>
+</button>
+</div>
+<!-- Panel Content -->
+<div class="flex-1 p-6 overflow-y-auto">
+<div class="max-w-4xl mx-auto w-full">
+<header class="mb-8">
+<h2 class="font-h2 text-h2 text-on-surface mb-2">Customer Relationship Management</h2>
+<p class="text-on-surface-variant font-body text-body">Manage your dynamic records and interactions.</p>
+</header>
+<!-- Bento Grid Content Placeholder -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+<div class="bg-surface-container-low border border-surface-variant rounded-lg p-5 hover:border-outline transition-colors cursor-pointer flex flex-col gap-3 group">
+<div class="w-10 h-10 rounded bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<h3 class="font-medium text-on-surface">Active Leads</h3>
+<p class="text-2xl font-h2 text-h2">1,248</p>
+</div>
+<div class="bg-surface-container-low border border-surface-variant rounded-lg p-5 hover:border-outline transition-colors cursor-pointer flex flex-col gap-3 group">
+<div class="w-10 h-10 rounded bg-tertiary-container/10 flex items-center justify-center text-tertiary-container group-hover:bg-tertiary-container group-hover:text-on-tertiary-container transition-colors">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<h3 class="font-medium text-on-surface">Revenue Pipeline</h3>
+<p class="text-2xl font-h2 text-h2">€ 45,200</p>
+</div>
+<div class="bg-surface-container-low border border-surface-variant rounded-lg p-5 md:col-span-2 lg:col-span-1 hover:border-outline transition-colors cursor-pointer flex flex-col gap-3 group">
+<div class="w-10 h-10 rounded bg-secondary-container/30 flex items-center justify-center text-on-secondary-container group-hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<h3 class="font-medium text-on-surface">Pending Actions</h3>
+<p class="text-2xl font-h2 text-h2">12</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Resizable Handle -->
+<div class="w-[2px] bg-zinc-800 hover:bg-amber-500 cursor-col-resize transition-colors shrink-0 z-20"></div>
+<!-- Panel 2 -->
+<section class="flex-1 flex flex-col h-full bg-surface-dim min-w-0">
+<!-- Panel Tabs -->
+<div class="flex items-center border-b border-surface-variant bg-surface-container-lowest overflow-x-auto no-scrollbar">
+<!-- Active Tab -->
+<button class="flex items-center gap-2 px-4 py-2 text-amber-500 border-b-2 border-amber-500 bg-surface-container/30 transition-colors">
+<span class="material-symbols-outlined text-[16px]">receipt_long</span>
+<span class="font-medium whitespace-nowrap">Fatture</span>
+<span class="material-symbols-outlined text-[14px] hover:bg-zinc-800 rounded-full p-0.5 ml-2">close</span>
+</button>
+</div>
+<!-- Panel Content -->
+<div class="flex-1 p-6 overflow-y-auto">
+<div class="max-w-4xl mx-auto w-full h-full flex flex-col items-center justify-center text-center opacity-60">
+<div class="w-16 h-16 rounded-xl bg-surface-container-highest border border-surface-variant flex items-center justify-center mb-4 text-secondary-fixed-dim">
+<span class="material-symbols-outlined text-[32px]">receipt_long</span>
+</div>
+<h3 class="font-h2 text-h2 text-on-surface mb-2">Fatture Content</h3>
+<p class="font-body text-body text-on-surface-variant max-w-sm">
+                        Select an invoice from the list or create a new one to populate this detailed view panel.
+                    </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Right Sidebar (SideNavBar 2 - ZeusClaw AI Chat) -->
+<aside class="flex flex-col h-screen right-0 top-0 pt-12 docked w-80 border-l border-zinc-800 bg-zinc-900/40 font-manrope text-sm z-10 shrink-0 relative focus-within:ring-1 focus-within:ring-amber-500/30 transition-all">
+<div class="px-5 mb-6">
+<h2 class="text-amber-500 font-bold uppercase tracking-widest text-xs mb-1">ZeusClaw</h2>
+<p class="text-zinc-400 font-body text-body">AI Assistant</p>
+</div>
+<!-- Chat / Threads Navigation -->
+<div class="flex items-center gap-1 px-3 mb-4">
+<button class="flex-1 text-amber-500 border-l-2 border-amber-500 bg-zinc-800/40 py-1.5 px-3 rounded-r-md text-left transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span>Chat</span>
+</div>
+</button>
+<button class="flex-1 text-zinc-500 border-l-2 border-transparent hover:bg-zinc-800/30 hover:text-zinc-100 py-1.5 px-3 rounded-r-md text-left transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">forum</span>
+<span>Threads</span>
+</div>
+</button>
+</div>
+<!-- Chat History Area -->
+<div class="flex-1 overflow-y-auto px-4 py-2 flex flex-col gap-4 font-body text-body">
+<!-- AI Message -->
+<div class="flex flex-col gap-1 items-start">
+<div class="bg-surface-container border border-surface-variant rounded-xl rounded-tl-sm px-4 py-2.5 max-w-[90%] text-on-surface text-[13px] leading-relaxed shadow-sm">
+                    Hello. I am ZeusClaw. How can I assist with your workspace today?
+                </div>
+</div>
+<!-- User Message -->
+<div class="flex flex-col gap-1 items-end">
+<div class="bg-amber-500/10 border border-amber-500/20 text-amber-100 rounded-xl rounded-tr-sm px-4 py-2.5 max-w-[90%] text-[13px] leading-relaxed shadow-sm">
+                    Can you extract the latest invoices from the 'Fatture' module?
+                </div>
+</div>
+<!-- AI Message -->
+<div class="flex flex-col gap-1 items-start">
+<div class="bg-surface-container border border-surface-variant rounded-xl rounded-tl-sm px-4 py-2.5 max-w-[90%] text-on-surface text-[13px] leading-relaxed shadow-sm">
+                    Certainly. I've located 3 pending invoices in the current view. Would you like me to summarize them or open them in a split panel?
+                </div>
+</div>
+</div>
+<!-- Fixed Input Bottom -->
+<div class="p-4 bg-zinc-900/60 border-t border-zinc-800 backdrop-blur-md mt-auto">
+<button class="w-full flex items-center justify-center gap-2 py-2 mb-3 rounded border border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800 hover:border-zinc-600 text-zinc-300 transition-colors text-[13px] font-medium">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                New Message
+            </button>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container border border-surface-variant rounded-md py-2.5 pl-3 pr-10 text-[13px] text-on-surface placeholder-zinc-500 focus:outline-none focus:border-amber-500 focus:ring-0 transition-colors" placeholder="Command ZeusClaw..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-amber-500 transition-colors p-1">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+<div class="mt-4 flex items-center justify-center gap-2 pt-2 border-t border-zinc-800/50">
+<button class="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-[12px] transition-colors">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                    History
+                </button>
+</div>
+</div>
+</aside>
+</body></html>

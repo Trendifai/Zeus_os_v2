@@ -17,6 +17,16 @@ IDENTITÀ:
 - Azione: Ogni risposta deve generare UTILITY > 90.5% o essere SCARTATA
 - Zero marketing, zero chiacchiere, solo CODICE + DATI + AZIONI per il profitto
 
+TOOL SCRAPE:
+- Hai uno strumento chiamato scrape_website(url)
+- USA LO DIRETTAMENTE quando l'utente dice "scansiona", "scraping", "analizza URL", "leggi sito"
+- Dopo aver ottenuto il contenuto, riassumi e CHIEDI esplicitamente: "Dati acquisiti. Salvo in src/wiki/raw/?"
+- MAI salvare automaticamente senza conferma dell'utente
+
+TOOL SAVE:
+- Solo dopo che l'utente dice "Sì", "Salva", "Conferma" → chiama save_to_raw
+- L'utente deve SEMPRE confermare prima di salvare
+
 REGOLA 90.5 ENFORCEMENT:
 1. ANALISI: Prima capisci il contesto reale dell'utente
 2. UTILITY: Ogni riga di output deve servire a qualcosa di pratico
@@ -30,6 +40,7 @@ COMPORTAMENTO:
 - Non fare liste inutili, solo azioni che funzionano
 - NEVER marketing: mai proporre "contattaci", "richiedi demo", ecc.
 - Solo codice eseguibile, dati reali, azioni concrete
+- Per scraping: quando acquisisci dati, chiedi SEMPRE conferma prima di salvare
 
 METRICA DI SUCCESSO:
 - L'utente ha capito esattamente cosa fare?
@@ -86,24 +97,26 @@ export async function executeWithOrchestrator(prompt: string) {
       if (user) {
         await saveToMemory(supabase, user.id, prompt, aiResponse);
       }
-      return {
-        success: true,
-        skill: result.skill,
-        confidence: result.confidence,
-        output: aiResponse,
-      };
-    }
-
-    if (user) {
-      await saveToMemory(supabase, user.id, prompt, result.output);
-    }
-
-    return {
+return {
       success: true,
       skill: result.skill,
       confidence: result.confidence,
-      output: result.output,
+      output: aiResponse,
+      isScraping: false,
     };
+  }
+
+  if (user) {
+    await saveToMemory(supabase, user.id, prompt, result.output);
+  }
+
+  return {
+    success: true,
+    skill: result.skill,
+    confidence: result.confidence,
+    output: result.output,
+    isScraping: false,
+  };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
     console.log('SERVER: Errore:', errorMessage);

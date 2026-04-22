@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Paperclip, Wand2, Send, Loader2, Download } from 'lucide-react';
+import { Paperclip, Wand2, Send, Loader2, Download, Globe, AlertCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { executeWithOrchestrator } from '@/app/actions/orchestrator';
@@ -14,6 +14,8 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   hasCode?: boolean;
+  isError?: boolean;
+  isScraping?: boolean;
 }
 
 export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
@@ -21,9 +23,12 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
   const [isResizing, setIsResizing] = useState(false);
   const width = controlledWidth ?? internalWidth;
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'assistant', content: 'Pronto, CEO. ZEUS è operativo. Cosa devo fare?' }
+  ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isScraping, setIsScraping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -92,6 +97,17 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
     setMessages((prev) => [...prev, message]);
   }, []);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const form = e.currentTarget.form;
+      if (form) {
+        const submitEvent = new Event('submit', { bubbles: true });
+        form.dispatchEvent(submitEvent);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedInput = input.trim();
@@ -100,6 +116,7 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
     setInput('');
     appendMessage({ role: 'user', content: trimmedInput });
     setIsLoading(true);
+    setIsScraping(false);
 
     try {
       const response = await executeWithOrchestrator(trimmedInput);
@@ -108,13 +125,19 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
         const formattedResponse = response.output || 'Nessuna risposta';
         appendMessage({ role: 'assistant', content: formattedResponse });
       } else {
-        appendMessage({ role: 'assistant', content: `ZEUS CLOW OFFLINE: ${response.error || 'Controlla API Key nel terminale'}` });
+        const errorMsg = response.error || '';
+        
+        if (errorMsg.includes('fetch') || errorMsg.includes('network') || errorMsg.includes('Failed to fetch') || errorMsg.includes('URL')) {
+          appendMessage({ role: 'assistant', content: 'Sito irraggiungibile o errore di connessione. Riprovo, CEO?', isError: true });
+        } else {
+          appendMessage({ role: 'assistant', content: `ERRORE: ${errorMsg}. Riprovo, CEO?` });
+        }
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Controlla API Key nel terminale';
-      appendMessage({ role: 'assistant', content: `ZEUS CLOW OFFLINE: ${errorMessage}` });
+      appendMessage({ role: 'assistant', content: 'Sito irraggiungibile o errore di connessione. Riprovo, CEO?', isError: true });
     } finally {
       setIsLoading(false);
+      setIsScraping(false);
     }
   };
 
@@ -132,8 +155,18 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/50 bg-zinc-900/20">
-          <h2 className="text-sm font-semibold text-amber-400 tracking-wide">ZEUS CLOW</h2>
-          <p className="text-xs text-zinc-500 mt-0.5 font-medium">AI Orchestrator</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-amber-400 tracking-wide">ZEUS CLOW</h2>
+              <p className="text-xs text-zinc-500 mt-0.5 font-medium">AI Orchestrator</p>
+            </div>
+            {isScraping && (
+              <div className="flex items-center gap-2 px-2 py-1 bg-amber-400/10 border border-amber-400/30 rounded-lg animate-pulse">
+                <Globe className="w-3 h-3 text-amber-400" />
+                <span className="text-xs text-amber-400">Scansionando...</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
@@ -154,9 +187,17 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
               className={`p-4 rounded-xl text-sm leading-relaxed ${
                 msg.role === 'user'
                   ? 'bg-zinc-800/60 text-zinc-300 ml-8 border border-zinc-700/30'
+                  : msg.isError
+                  ? 'bg-red-900/20 text-red-400 mr-8 border border-red-500/30'
                   : 'bg-gradient-to-br from-zinc-900/80 to-zinc-800/40 text-zinc-200 mr-8 border border-amber-400/10'
               }`}
             >
+              {msg.isScraping && (
+                <div className="mb-2 flex items-center gap-2 text-amber-400 text-xs">
+                  <Globe className="w-3 h-3 animate-pulse" />
+                  <span>Zeus sta scansionando il sito...</span>
+                </div>
+              )}
               <div className="overflow-y-auto max-h-96">
                 <div className="prose prose-invert prose-sm max-w-none
                   prose-headings:text-amber-400 prose-headings:font-semibold prose-headings:mb-2
@@ -179,17 +220,16 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
                     className="flex items-center gap-2 px-3 py-2 text-xs bg-amber-400/10 text-amber-400 rounded-lg hover:bg-amber-400/20 transition-colors"
                   >
                     <Download className="w-3 h-3" />
-                    Download Plugin
+                    Download
                   </button>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(extractCode(msg.content));
-                      alert('Codice copiato! Usa "PUSH TO GIT" per salvare su GitHub');
                     }}
                     className="flex items-center gap-2 px-3 py-2 text-xs bg-zinc-700/30 text-zinc-300 rounded-lg hover:bg-zinc-700/50 transition-colors"
                   >
                     <Download className="w-3 h-3" />
-                    Push to Git
+                    Copy
                   </button>
                 </div>
               )}
@@ -199,7 +239,7 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
           {isLoading && (
             <div className="p-3 rounded-xl text-sm bg-zinc-900/60 text-amber-400 mr-8 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Elaborazione...</span>
+              <span>{isScraping ? 'Zeus sta scansionando...' : 'Elaborazione...'}</span>
             </div>
           )}
           <div ref={chatEndRef} />
@@ -211,8 +251,9 @@ export default function ZeusClow({ width: controlledWidth }: ZeusClowProps) {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Invia un comando..."
-              className="flex-1 bg-zinc-900/60 border border-zinc-700/50 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 transition-all"
+              className="flex-1 bg-zinc-900/60 border border-zinc-700/50 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 transition-all disabled:opacity-50"
               disabled={isLoading}
             />
             <button
