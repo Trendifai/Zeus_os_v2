@@ -1,20 +1,38 @@
 # WALKTHROUGH - 2026-04-22
-## Quick Guide for CEO
+## Quick Reference for CEO
+## ZEUS OS v2 - Manipura
 
 ---
 
-## 1. How to Scrape a Website
+## 1. Karpathy Wiki Structure
 
-**Step 1:** Type in ZeusClaw chat:
+```
+src/wiki/
+├── index/              # ✅ Validated content
+│   ├── prodotti.md
+│   ├── fornitori.md
+│   └── 00_GOALS/
+│       └── active_kpis.md
+├── raw/               # 🔄 Scraping buffer
+│   └── proposals/    # ⏳ CEO approval needed
+├── log/               # 📝 Maintenance
+└── wiki-compiler.py
+```
+
+---
+
+## 2. How to Scrape a Website
+
+**Step 1:** Type in ZeusClaw:
 ```
 Scansiona https://manipura.shop
 ```
 
-**Step 2:** Zeus fetches the content and shows you a summary
+**Step 2:** Zeus fetches → cleans → returns summary
 
 **Step 3:** Zeus asks:
 ```
-"Dati acquisiti. Salvo in src/wiki/raw/?"
+Dati acquisiti. Salvo in src/wiki/raw/[domain].md?
 ```
 
 **Step 4:** Confirm with:
@@ -26,121 +44,114 @@ or
 Salva
 ```
 
-**Result:** File saved in `src/wiki/raw/[domain].md`
+**Result:** Saved to `src/wiki/raw/[domain].md`
 
 ---
 
-## 2. How to Update Goals
+## 3. GRO Mode (Goal-Driven Orchestration)
 
+### Activate
+When talking to Zeus, he automatically:
+1. Checks current command against GOALS
+2. Validates KPI impact
+3. Proposes optimized alternatives if conflict
+
+### Check GOALS
 **File:** `src/wiki/index/00_GOALS/active_kpis.md`
 
-**Format:**
+### Update GOALS
 ```markdown
 - [GOAL_X]: Goal Name (KPI Target).
 ```
 
-**Example:**
-```markdown
-- [GOAL_4]: Reduce Bundle Size (Bundle < 150kb).
-```
-
-**After edit:** Run:
+Then run:
 ```bash
 python scripts/compile_wiki.py
 ```
-This updates `src/zeus_context.txt` for Zeus.
 
 ---
 
-## 3. How to Check KPI Status
+## 4. Scripts Reference
 
-**View:** `src/wiki/index/00_GOALS/active_kpis.md`
-
-| ID | Metric | Target |
-|----|--------|--------|
-| P-001 | Dashboard Load | < 1000ms |
-| P-002 | Bundle Size | < 200kb |
-| P-003 | LLM Latency | < 2000ms |
-
----
-
-## 4. How Maintenance Works
-
-### Automatic
-- `zeus_watcher.py` runs every 30 minutes
-- Checks context against GOALS
-- Creates proposals in `src/wiki/raw/proposals/`
-- Triggers notification on dashboard
-
-### Manual
+### Compile Wiki
 ```bash
-# Lint wiki files
-python scripts/lint_wiki.py
-
-# Compile wiki to context
 python scripts/compile_wiki.py
-
-# Auto-fix lint issues
-python scripts/lint_wiki.py --fix
 ```
+Reads `index/` → generates `src/zeus_context.txt`
+
+### Lint Wiki
+```bash
+python scripts/lint_wiki.py          # Check
+python scripts/lint_wiki.py --fix    # Auto-fix
+```
+Validates: H1 required, no double lines, trim trailing
+
+### Autonomous Watcher
+```bash
+python scripts/zeus_watcher.py
+```
+Runs every 30 minutes, creates proposals
 
 ---
 
-## 5. MCP Bridge Usage
+## 5. MCP Bridge
 
 **Endpoint:** `POST /api/mcp`
 
-**Headers:**
-```json
-{
-  "Content-Type": "application/json",
-  "x-api-key": "zeus-mcp-secret"
-}
-```
-
-**Example - Read File:**
+### Read Codebase
 ```json
 {
   "tool": "read_codebase",
-  "params": { "path": "src/app/page.tsx" }
+  "params": { "path": "src/app/page.tsx" },
+  "api_key": "zeus-mcp-secret"
 }
 ```
 
-**Example - Propose Edit:**
+### Suggest Edit (Creates Proposal)
 ```json
 {
   "tool": "suggest_edit",
   "params": {
     "path": "src/app/page.tsx",
     "code": "export default function..."
-  }
+  },
+  "api_key": "zeus-mcp-secret"
 }
 ```
 
-**Note:** All edits go to `raw/proposals/` - CEO must approve.
+**Security:** All changes → `raw/proposals/` → CEO approval required
 
 ---
 
-## 6. GRO Mode Commands
-
-When talking to Zeus, you can:
-- Ask Zeus to analyze code against GOALS
-- Request performance optimization suggestions
-- Ask Zeus to propose changes (saved as proposals)
-
----
-
-## Quick Reference
+## 6. Quick Commands
 
 | Action | Command |
 |--------|---------|
 | Scrape URL | "Scansiona [URL]" |
 | Save content | "Sì" / "Salva" |
 | Update GOALS | Edit `00_GOALS/active_kpis.md` |
-| Check KPIs | Read `active_kpis.md` |
-| Lint wiki | `python scripts/lint_wiki.py` |
 | Compile wiki | `python scripts/compile_wiki.py` |
+| Lint wiki | `python scripts/lint_wiki.py` |
 
 ---
 
-*Quick reference for CEO - ZEUS OS v2*
+## 7. Error Handling
+
+| Error | Message |
+|-------|---------|
+| Network failure | "Sito irraggiungibile o errore di connessione. Riprovo, CEO?" |
+| Scraping failed | "Scraping fallito. Riprovo?" |
+| File not found | "File non trovato" |
+
+---
+
+## 8. Tomorrow's Tasks
+
+- [ ] Test scraping on manipura.shop
+- [ ] Implement CEO approval flow for proposals
+- [ ] Activate zeus_watcher.py in production
+- [ ] Connect MCP to external GCA service
+
+---
+
+*Quick reference for CEO - ZEUS OS v2 - 2026-04-22*

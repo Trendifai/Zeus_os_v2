@@ -1,86 +1,114 @@
 # CHANGELOG - 2026-04-22
 ## ZEUS OS v2 - Manipura
+## Repository: https://github.com/Trendifai/Zeus_os_v2
 
 ---
 
-## Migration
+## Migration Completed
 
-### Wiki Structure Migration
-- **Before:** `manipura_wiki/` (root level)
-- **After:** `src/wiki/` (Protocol Karpathy compliant)
-- **Structure:** `index/` | `raw/` | `log/`
+### Repository Migration
+- **Target:** Trendifai/Zeus_os_v2
+- **Status:** ✅ Complete
 
----
-
-## Core Logic
-
-### Scripts Implemented
-- `scripts/compile_wiki.py` - Reads `index/` → generates `src/zeus_context.txt`
-- `scripts/lint_wiki.py` - Enforces: H1 required, no double empty lines, trim trailing
-
-### Commands
-```bash
-python scripts/lint_wiki.py --fix  # Auto-fix lint issues
-python scripts/compile_wiki.py    # Compile wiki to context
-```
+### Wiki Structure Migration (Protocol Karpathy)
+- **Before:** `manipura_wiki/` (root level, non-compliant)
+- **After:** `src/wiki/` (Karpathy Integral Structure)
+- **Structure:**
+  ```
+  src/wiki/
+  ├── index/           # Validated content (H1 required)
+  ├── raw/            # Scraping buffer + proposals
+  ├── log/            # Maintenance + changelog
+  └── wiki-compiler.py
+  ```
 
 ---
 
-## Skills
+## Karpathy Integral Structure
+
+### Index (Validated Knowledge)
+- `src/wiki/index/fornitori.md`
+- `src/wiki/index/prodotti.md`
+- `src/wiki/index/00_GOALS/active_kpis.md`
+- **Rule:** H1 mandatory, no double empty lines, trim trailing
+
+### Raw (Scraping Buffer)
+- `src/wiki/raw/` - Buffer for scraped content
+- `src/wiki/raw/proposals/` - CEO approval pending
+
+### Log (Maintenance)
+- `src/wiki/log/maintenance.md` - Compilation log
+- `src/wiki/log/CHANGELOG_2026-04-22.md`
+- `src/wiki/log/WALKTHROUGH_TODAY.md`
+
+---
+
+## GRO (Goal-Driven Orchestration)
+
+### Activation for Programming Aid
+- **File:** `src/app/actions/zeus_gro.ts`
+- **GOALS:** `src/wiki/index/00_GOALS/active_kpis.md`
+- **System Prompt:** Zeus-GDA mode enabled
+
+### GRO Features
+1. **KPI Validation** - Every code suggestion validated against targets
+2. **Proposal Generation** - Changes saved to `raw/proposals/` pending CEO approval
+3. **Autonomous Loop** - `zeus_watcher.py` runs every 30 minutes
+4. **MCP Bridge** - `/api/mcp` for external tools (GCA integration)
+
+### Active GOALS
+| ID | Objective | KPI Target |
+|----|-----------|------------|
+| GOAL_1 | Performance Optimization | Dashboard Load < 1s |
+| GOAL_2 | Knowledge Ingestion | Scrape & Index manipura.shop |
+| GOAL_3 | Autonomous Programming Aid | Implement GRO Loop |
+
+---
+
+## Core Scripts
+
+| Script | Function |
+|--------|----------|
+| `scripts/compile_wiki.py` | Index → `zeus_context.txt` |
+| `scripts/lint_wiki.py` | Validate H1, spacing, trim |
+| `scripts/zeus_watcher.py` | Autonomous GRO loop |
+
+---
+
+## Skills Implemented
 
 ### Web Scraper
-- `scrape_tool.ts` - Fetches HTML → cleans → returns markdown (max 2000 chars)
+- `scrape_tool.ts` - HTML → Markdown (max 2000 chars)
 - **Rule:** NO automatic save
 
-### Save to Raw
-- `save_to_raw.ts` - Writes ONLY after explicit CEO confirmation
-- **Flow:** CEO says "Sì/Salva" → save executes
+### Safe Save
+- `save_to_raw.ts` - Writes ONLY after CEO confirmation
+- **Flow:** CEO says "Sì/Salva" → execute
 
 ---
 
-## UI Fixes
+## UI Dashboard
 
-### Dashboard
-- **Send Button:** Wired to `handleZeusCommand()`
-- **Text Selection:** `select-none` removed
-- **Loading State:** Spinner + disabled input during processing
-- **Error Handling:** "Sito irraggiungibile... Riprovo, CEO?"
-
----
-
-## Architecture
-
-### Goal-Driven System
-- `src/wiki/index/00_GOALS/active_kpis.md` - Active goals & KPIs
-- `zeus_gro.ts` - Goal-Driven Orchestration logic
-- `zeus_brain.ts` - Brain context loader
-
-### GOALS Defined
-| ID | Objective |
-|----|-----------|
-| GOAL_1 | Performance Optimization (Dashboard < 1s) |
-| GOAL_2 | Knowledge Ingestion (Scrape manipura.shop) |
-| GOAL_3 | Autonomous Programming Aid (GRO Loop) |
+- Send Button wired to `handleZeusCommand()`
+- Text selection enabled (no `select-none`)
+- Loading state with spinner
+- Error handling: "Sito irraggiungibile... Riprovo, CEO?"
 
 ---
 
-## Files Created
+## Files Created This Session
 
 | File | Purpose |
 |------|---------|
-| `src/wiki/index/fornitori.md` | Fornitori data |
-| `src/wiki/index/prodotti.md` | Prodotti data |
-| `src/wiki/index/00_GOALS/active_kpis.md` | Goals & KPIs |
-| `src/app/actions/scrape_tool.ts` | Web scraper |
-| `src/app/actions/save_to_raw.ts` | Safe save |
-| `src/app/actions/zeus.ts` | Command handler |
-| `src/app/actions/zeus_gro.ts` | GDA logic |
-| `src/app/actions/zeus_brain.ts` | Brain context |
+| `EOD_2026-04-22.md` | Full EOD report |
 | `scripts/compile_wiki.py` | Wiki compiler |
 | `scripts/lint_wiki.py` | Wiki linter |
-| `scripts/zeus_watcher.py` | Autonomous loop |
+| `src/wiki/log/CHANGELOG_2026-04-22.md` | This changelog |
+| `src/wiki/log/WALKTHROUGH_TODAY.md` | CEO quick guide |
+| `src/app/actions/zeus_brain.ts` | Brain context loader |
+| `src/app/actions/zeus_gro.ts` | GDA logic |
 | `src/app/api/mcp/route.ts` | MCP bridge |
 
 ---
 
-*Generated by ZEUS OS - 2026-04-22*
+*Generated by ZEUS OS v2 - 2026-04-22*
