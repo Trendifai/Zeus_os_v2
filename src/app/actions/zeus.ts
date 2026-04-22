@@ -3,6 +3,7 @@
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { callOpenRouter } from '@/lib/openrouter';
+import { logScraping } from './zeus_logger';
 
 const RAW_DIR = join(process.cwd(), 'src/wiki/raw');
 
@@ -123,12 +124,15 @@ export async function handleZeusCommand(prompt: string): Promise<ZeusResponse> {
       const result = await scrapeUrl(url!);
       
       if (!result.success) {
+        logScraping(url!, false, result.error);
         return {
           success: false,
           output: '',
           error: 'Sito irraggiungibile o errore di connessione. Riprovo, CEO?'
         };
       }
+      
+      logScraping(url!, true, result.title);
 
       enhancedPrompt = `SITO SCRAPATO: ${result.title || url}\n\nCONTENUTO (primi 2000 caratteri):\n${result.content}\n\nDOMANDA UTENTE:\n${prompt}`;
       scraped = true;
