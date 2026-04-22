@@ -1,46 +1,87 @@
 'use server';
 
-import { callOpenRouter } from '@/lib/openrouter';
-import { scrapeUrl } from './scrape_tool';
-import { saveToRaw } from './save_to_raw';
-import { existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { callOpenRouter } from '@/lib/openrouter';
 
 const RAW_DIR = join(process.cwd(), 'src/wiki/raw');
 
-async function scrapeUrlLocal(url: string): Promise<string> {
-  const result = await scrapeUrl(url);
-  if (result.success && result.content) {
-    return result.content.slice(0, 2000);
-  }
-  throw new Error(result.error || 'Scraping failed');
+interface ScrapeResult {
+  success: boolean;
+  content?: string;
+  title?: string;
+  error?: string;
 }
 
-async function saveToRawLocal(content: string, filename: string): Promise<string> {
-  const result = await saveToRaw(content, filename);
-  if (result.success) {
-    return result.path || filename;
+async function scrapeUrl(url: string): Promise<ScrapeResult> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'ZEUS-OS/1.0 (Web Scraper Bot)'
+      }
+    });
+
+    if (!response.ok) {
+      return { success: false, error: `HTTP ${response.status}` };
+    }
+
+    const html = await response.text();
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim() : url;
+
+    const cleaned = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/^\s+|\s+$/gm, '')
+      .trim();
+
+    return {
+      success: true,
+      content: cleaned.slice(0, 2000),
+      title
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Unknown error'
+    };
   }
-  throw new Error(result.error || 'Save failed');
+}
+
+async function writeToRaw(content: string, filename: string, metadata?: { url?: string; title?: string }): Promise<string> {
+  if (!existsSync(RAW_DIR)) {
+    mkdirSync(RAW_DIR, { recursive: true });
+  }
+
+  const safeFilename = filename.endsWith('.md') ? filename : `${filename}.md`;
+  const outputPath = join(RAW_DIR, safeFilename);
+
+  const frontmatter = metadata
+    ? `---\nurl: "${metadata.url || ''}"\ntitle: "${metadata.title || safeFilename}"\nsaved: "${new Date().toISOString()}"\n---\n\n`
+    : '';
+
+  writeFileSync(outputPath, frontmatter + content);
+  return outputPath;
 }
 
 const ZEUS_SYSTEM = `Sei ZEUS, l'Assistente AI Primordiale di Manipura OS.
-REGOLA ORO: MAI salvare automaticamente dati senza conferma esplicita dell'utente.
-TOOL SCRAPE: Quando l'utente dice "scansiona", "leggi", "analizza URL", usa scrapeUrl(url).
-Dopo scraping, RIASSUMI il contenuto e CHIEDI: "Dati acquisiti. Salvo in src/wiki/raw/[nomefile].md?"
-TOOL SAVE: Solo dopo "Sì", "Salva", "Conferma" → chiama saveToRaw(content, filename).
-ERRORE CONNESSIONE: "Sito irraggiungibile o errore di connessione. Riprovo, CEO?"`;
-
-export interface ZeusResponse {
-  success: boolean;
-  output: string;
-  error?: string;
-  scraped?: boolean;
-}
+REGOLE:
+1. Se l'utente dice "scansiona", "leggi", "analizza" + URL → usa scrapeUrl
+2. Dopo scraping, riporta il contenuto e CHIEDI: "Salvo in src/wiki/raw/[nomefile].md?"
+3. MAI salvare automaticamente senza conferma esplicita dell'utente ("Sì", "Salva", "Conferma")
+4. Per errori di rete → "Sito irraggiungibile o errore di connessione. Riprovo, CEO?"
+5. Rispondi in modo conciso e orientato all'azione`;
 
 function extractUrl(text: string): string | null {
-  const urlRegex = /https?:\/\/[^\s<>"]+/gi;
-  const match = text.match(urlRegex);
+  const match = text.match(/https?:\/\/[^\s<>"]+/gi);
   return match ? match[0] : null;
 }
 
@@ -57,36 +98,46 @@ function extractFilename(text: string): string {
   return 'zeus-response.md';
 }
 
+export interface ZeusResponse {
+  success: boolean;
+  output: string;
+  error?: string;
+  scraped?: boolean;
+  saved?: boolean;
+}
+
 export async function handleZeusCommand(prompt: string): Promise<ZeusResponse> {
   try {
-    const hasUrl = extractUrl(prompt);
-    let contextPrompt = prompt;
-    let scraped = false;
-
-    if (hasUrl && (
+    const url = extractUrl(prompt);
+    const isScraping = url && (
       prompt.toLowerCase().includes('scansiona') ||
       prompt.toLowerCase().includes('leggi') ||
       prompt.toLowerCase().includes('analizza') ||
       prompt.toLowerCase().includes('scrape')
-    )) {
-      try {
-        const scrapedContent = await scrapeUrlLocal(hasUrl);
-        contextPrompt = `CONTENUTO SCRAPING:\n${scrapedContent}\n\nDOMANDA UTENTE:\n${prompt}`;
-        scraped = true;
-      } catch (scrapeErr) {
+    );
+
+    let enhancedPrompt = prompt;
+    let scraped = false;
+
+    if (isScraping) {
+      const result = await scrapeUrl(url!);
+      
+      if (!result.success) {
         return {
           success: false,
           output: '',
-          error: 'Sito irraggiungibile o errore di connessione. Riprovo, CEO?',
-          scraped: false
+          error: 'Sito irraggiungibile o errore di connessione. Riprovo, CEO?'
         };
       }
+
+      enhancedPrompt = `SITO SCRAPATO: ${result.title || url}\n\nCONTENUTO (primi 2000 caratteri):\n${result.content}\n\nDOMANDA UTENTE:\n${prompt}`;
+      scraped = true;
     }
 
     const response = await callOpenRouter(
       'google/gemini-2.0-flash-001',
       ZEUS_SYSTEM,
-      contextPrompt
+      enhancedPrompt
     );
 
     return {
@@ -94,35 +145,30 @@ export async function handleZeusCommand(prompt: string): Promise<ZeusResponse> {
       output: response,
       scraped
     };
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Errore sconosciuto';
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Errore sconosciuto';
     
-    if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed')) {
+    if (msg.includes('fetch') || msg.includes('network')) {
       return {
         success: false,
         output: '',
-        error: 'Sito irraggiungibile o errore di connessione. Riprovo, CEO?',
-        scraped: false
+        error: 'Sito irraggiungibile o errore di connessione. Riprovo, CEO?'
       };
     }
 
     return {
       success: false,
       output: '',
-      error: msg,
-      scraped: false
+      error: msg
     };
   }
 }
 
-export async function handleSaveToRaw(content: string, filename?: string): Promise<{ success: boolean; path?: string; error?: string }> {
+export async function saveToRaw(content: string, filename?: string): Promise<{ success: boolean; path?: string; error?: string }> {
   try {
-    if (!existsSync(RAW_DIR)) {
-      mkdirSync(RAW_DIR, { recursive: true });
-    }
     const safeFilename = filename || extractFilename('scraped');
-    const result = await saveToRawLocal(content, safeFilename);
-    return { success: true, path: result };
+    const path = await writeToRaw(content, safeFilename);
+    return { success: true, path };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Save failed' };
   }

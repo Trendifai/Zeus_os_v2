@@ -1,4 +1,4 @@
-<document path='wiki/index/fornitori.md'>
+<document path='index/fornitori.md'>
 # Fornitori Manipura
 
 ## Anagrafica Fornitori
@@ -14,7 +14,7 @@
 - Ordini mese: 12
 </document>
 
-<document path='wiki/index/prodotti.md'>
+<document path='index/prodotti.md'>
 # Prodotti Attivi Manipura
 
 ## Catalogo Prodotti
@@ -31,4 +31,12 @@
 ## Ultimo Ordine
 - Data: 2026-04-20
 - Fornitore: FOR-001
+</document>
+
+<document path='index/00_GOALS/active_kpis.md'>
+# ACTIVE GOALS & KPIs
+
+- [GOAL_1]: Performance Optimization (Dashboard Load < 1s).
+- [GOAL_2]: Knowledge Ingestion (Scrape & Index manipura.shop).
+- [GOAL_3]: Autonomous Programming Aid (Implement GRO Loop).
 </document>

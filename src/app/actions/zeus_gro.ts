@@ -7,6 +7,14 @@ import { join } from 'path';
 const GOALS_DIR = join(process.cwd(), 'src/wiki/index/00_GOALS');
 const PROPOSALS_DIR = join(process.cwd(), 'src/wiki/raw/proposals');
 
+interface Goal {
+  id: string;
+  name: string;
+  objective: string;
+  kpi: string;
+  status: 'pending' | 'in_progress' | 'completed';
+}
+
 interface KPI {
   id: string;
   metric: string;
@@ -16,6 +24,7 @@ interface KPI {
 }
 
 interface GoalContext {
+  goals: Goal[];
   kpis: KPI[];
   activeGoals: string[];
 }
@@ -26,90 +35,97 @@ function ensureDir(dir: string) {
   }
 }
 
-export async function evaluateGoals(): Promise<GoalContext> {
-  const kpiFile = join(GOALS_DIR, 'active_kpis.md');
+export async function loadGoals(): Promise<GoalContext> {
+  const goalsFile = join(GOALS_DIR, 'active_kpis.md');
   
-  let kpis: KPI[] = [];
-  let activeGoals: string[] = [];
+  const goals: Goal[] = [];
+  const kpis: KPI[] = [];
+  const activeGoals: string[] = [];
   
-  if (existsSync(kpiFile)) {
-    const content = readFileSync(kpiFile, 'utf-8');
-    
+  if (existsSync(goalsFile)) {
+    const content = readFileSync(goalsFile, 'utf-8');
     const lines = content.split('\n');
-    let currentKPI: Partial<KPI> = {};
+    
+    let currentGoal: Partial<Goal> = {};
+    let inGoalSection = false;
     
     for (const line of lines) {
-      if (line.startsWith('## ')) {
-        if (currentKPI.id) {
-          kpis.push(currentKPI as KPI);
+      if (line.startsWith('- [GOAL_')) {
+        inGoalSection = true;
+        if (currentGoal.id) goals.push(currentGoal as Goal);
+        
+        const match = line.match(/\[([^\]]+)\]:\s*(.+)/);
+        if (match) {
+          currentGoal = { 
+            id: match[1], 
+            name: match[2].split('(')[0].trim(),
+            status: 'pending'
+          };
+          activeGoals.push(match[1]);
         }
-        currentKPI = { priority: 'medium' };
       }
-      if (line.startsWith('id:')) currentKPI.id = line.replace('id:', '').trim();
-      if (line.startsWith('metric:')) currentKPI.metric = line.replace('metric:', '').trim();
-      if (line.startsWith('target:')) currentKPI.target = line.replace('target:', '').trim();
-      if (line.startsWith('current:')) currentKPI.current = line.replace('current:', '').trim();
-      if (line.startsWith('priority:')) currentKPI.priority = line.replace('priority:', '').trim() as KPI['priority'];
-      if (line.startsWith('- [x]')) activeGoals.push(line.replace('- [x]', '').trim());
+      
+      if (line.startsWith('| P-')) {
+        const parts = line.split('|').filter(p => p.trim());
+        if (parts.length >= 4) {
+          kpis.push({
+            id: parts[1].trim(),
+            metric: parts[2].trim(),
+            target: parts[3].trim(),
+            priority: 'medium'
+          });
+        }
+      }
+      
+      if (line.includes('(') && currentGoal.id) {
+        const objMatch = line.match(/\(([^)]+)\)/);
+        if (objMatch) currentGoal.objective = objMatch[1];
+      }
     }
     
-    if (currentKPI.id) {
-      kpis.push(currentKPI as KPI);
-    }
+    if (currentGoal.id) goals.push(currentGoal as Goal);
   }
   
-  return { kpis, activeGoals };
+  return { goals, kpis, activeGoals };
 }
 
-export async function checkKPIConflict(command: string, codeSnippet?: string): Promise<{
-  conflicts: KPI[];
+export async function checkKPIConflict(code: string, goal: Goal): Promise<{
+  hasConflict: boolean;
+  severity: 'high' | 'medium' | 'low';
   suggestion?: string;
 }> {
-  const goals = await evaluateGoals();
-  const conflicts: KPI[] = [];
+  const kpiName = goal.kpi.toLowerCase();
   
-  const lowerCommand = command.toLowerCase();
-  
-  for (const kpi of goals.kpis) {
-    const metric = kpi.metric.toLowerCase();
-    
-    if (metric.includes('bundle') || metric.includes('size') || metric.includes('weight')) {
-      if (lowerCommand.includes('import') && codeSnippet && codeSnippet.length > 500) {
-        conflicts.push(kpi);
-      }
-    }
-    
-    if (metric.includes('load') || metric.includes('performance') || metric.includes('speed')) {
-      if (lowerCommand.includes('heavy') || (codeSnippet && codeSnippet.length > 1000)) {
-        conflicts.push(kpi);
-      }
-    }
-    
-    if (metric.includes('token') || metric.includes('context')) {
-      if (codeSnippet && codeSnippet.split(/\s+/).length > 500) {
-        conflicts.push(kpi);
-      }
+  if (kpiName.includes('bundle') || kpiName.includes('size')) {
+    if (code.length > 5000) {
+      return {
+        hasConflict: true,
+        severity: 'high',
+        suggestion: `ATTENZIONE: Questo codice (~${(code.length/1000).toFixed(1)}kb) potrebbe impattare ${goal.name}. Suggerisco code splitting o lazy loading.`
+      };
     }
   }
   
-  let suggestion: string | undefined;
-  
-  if (conflicts.length > 0) {
-    const kpiNames = conflicts.map(c => c.metric).join(', ');
-    suggestion = `ATTENZIONE: Questa modifica potrebbe impattare i KPI: ${kpiNames}. ` +
-      `Suggerisco di: 1) Lazy loading dei componenti, 2) Code splitting, 3) Memoizzazione selettiva.`;
+  if (kpiName.includes('load') || kpiName.includes('performance')) {
+    if (code.includes('useEffect') && !code.includes('[]')) {
+      return {
+        hasConflict: true,
+        severity: 'medium',
+        suggestion: `ATTENZIONE: useEffect senza dependency array rilevato. Potrebbe impattare ${goal.name}.`
+      };
+    }
   }
   
-  return { conflicts, suggestion };
+  return { hasConflict: false, severity: 'low' };
 }
 
-export async function proposeChange(proposal: {
+export async function createProposal(proposal: {
   title: string;
   targetFile?: string;
   currentCode?: string;
   proposedCode: string;
   rationale: string;
-  kpisAffected: string[];
+  goalId: string;
 }): Promise<{ success: boolean; path?: string; error?: string }> {
   try {
     ensureDir(PROPOSALS_DIR);
@@ -121,77 +137,86 @@ export async function proposeChange(proposal: {
     const content = `---
 title: "${proposal.title}"
 timestamp: "${new Date().toISOString()}"
-status: "pending"
+status: "pending_ceo_approval"
+goal_id: "${proposal.goalId}"
 target_file: "${proposal.targetFile || 'N/A'}"
-kpis_affected: [${proposal.kpisAffected.map(k => `"${k}"`).join(', ')}]
 ---
 
 ## Rationale
 ${proposal.rationale}
 
-## Modifiche Proposte
-
-### File Target
+## File Target
 \`\`\`
 ${proposal.targetFile || 'Da definire'}
 \`\`\`
 
-### Codice Attuale
+## Codice Attuale
 \`\`\`typescript
 ${proposal.currentCode || 'Non specificato'}
 \`\`\`
 
-### Codice Proposto
+## Codice Proposto
 \`\`\`typescript
 ${proposal.proposedCode}
 \`\`\`
 
 ---
-_Generato automaticamente da Zeus-GDA_
+⚠️ IN ATTESA DI APPROVAZIONE CEO
+_Generato automaticamente da ZEUS-GDA_
 `;
-    
+
     writeFileSync(filepath, content);
-    
     return { success: true, path: filepath };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Proposal failed' };
   }
 }
 
-const ZEUS_GDA_SYSTEM = `Tu sei ZEUS-GDA (Goal-Driven Agent), l'evoluzione di Zeus per il Goal-Driven Orchestration.
-COMPITO: Monitorare il codice in parallelo a GCA (Gemini Code Assist).
-Ogni suggerimento DEVE essere validato contro i KPI in src/wiki/index/00_GOALS/active_kpis.md.
-FLUSSO:
-1. Ricevi un comando utente
-2. Consulta i GOALS attivi
-3. Valuta l'impatto sui KPI
-4. Se conflitto → proponi alternativa ottimizzata
-5. Se OK → esegui e proponi_change se necessario
-TOOL propose_change: Scrive file in src/wiki/raw/proposals/ per approvazione CEO.
-TOOL checkKPI: Valida modifiche contro KPI prima dell'esecuzione.
-REGOLA: Mai modificare codice senza proposta e approvazione esplicita.`;
+export async function listProposals(): Promise<{ files: string[]; paths: string[] }> {
+  ensureDir(PROPOSALS_DIR);
+  const files = existsSync(PROPOSALS_DIR)
+    ? require('fs').readdirSync(PROPOSALS_DIR).filter((f: string) => f.endsWith('.md'))
+    : [];
+  return {
+    files,
+    paths: files.map((f: string) => join(PROPOSALS_DIR, f))
+  };
+}
 
-export async function executeZeusGDA(prompt: string, context?: {
-  currentCode?: string;
-  targetFile?: string;
-}): Promise<{
+const ZEUS_GDA_SYSTEM = `Sei ZEUS-GDA, l'Agent di Goal-Driven Orchestration per Manipura OS.
+MISSIONE: Validare ogni azione contro i KPI in src/wiki/index/00_GOALS/active_kpis.md.
+COMPORTAMENTO:
+1. Ricevi comando → consulta i GOALS attivi
+2. Valuta impatto KPI → se conflitto proponi alternativa
+3. Se modifica codice → crea proposal in src/wiki/raw/proposals/
+4. Attendi approvazione CEO prima di applicare
+TOOL create_proposal: Salva in proposals/ per approvazione CEO
+TOOL check_kpi_conflict: Valida codice contro KPI
+ERRORE RETE: "Sito irraggiungibile o errore di connessione. Riprovo, CEO?"`;
+
+export async function executeZeusGDA(
+  prompt: string,
+  context?: { currentCode?: string; targetFile?: string }
+): Promise<{
   success: boolean;
   output: string;
-  kpiWarning?: string;
+  goalId?: string;
   proposalCreated?: string;
+  kpiWarning?: string;
   error?: string;
 }> {
   try {
-    const { conflicts, suggestion } = await checkKPIConflict(prompt, context?.currentCode);
+    const { goals } = await loadGoals();
     
     let enhancedPrompt = prompt;
     
-    if (context?.currentCode) {
-      enhancedPrompt += `\n\nCodice in analisi:\n\`\`\`typescript\n${context.currentCode}\n\`\`\``;
+    if (goals.length > 0) {
+      const goalList = goals.map(g => `- ${g.id}: ${g.name}`).join('\n');
+      enhancedPrompt += `\n\nGOALS ATTIVI:\n${goalList}`;
     }
     
-    if (conflicts.length > 0) {
-      enhancedPrompt += `\n\n⚠️ KPI CONFLICT DETECTED: ${conflicts.map(c => c.metric).join(', ')}`;
+    if (context?.currentCode) {
+      enhancedPrompt += `\n\nCODICE IN ANALISI:\n\`\`\`typescript\n${context.currentCode.slice(0, 1000)}\n\`\`\``;
     }
     
     const response = await callOpenRouter(
@@ -203,26 +228,13 @@ export async function executeZeusGDA(prompt: string, context?: {
     return {
       success: true,
       output: response,
-      kpiWarning: conflicts.length > 0 ? suggestion : undefined
+      goalId: goals[0]?.id
     };
   } catch (err) {
-    return {
-      success: false,
-      output: '',
-      error: err instanceof Error ? err.message : 'ZEUS-GDA Error'
-    };
+    const msg = err instanceof Error ? err.message : 'ZEUS-GDA Error';
+    if (msg.includes('fetch') || msg.includes('network')) {
+      return { success: false, output: '', error: 'Sito irraggiungibile o errore di connessione. Riprovo, CEO?' };
+    }
+    return { success: false, output: '', error: msg };
   }
-}
-
-export async function listProposals(): Promise<{ files: string[]; paths: string[] }> {
-  ensureDir(PROPOSALS_DIR);
-  
-  const files = existsSync(PROPOSALS_DIR) 
-    ? require('fs').readdirSync(PROPOSALS_DIR).filter((f: string) => f.endsWith('.md'))
-    : [];
-    
-  return {
-    files,
-    paths: files.map((f: string) => join(PROPOSALS_DIR, f))
-  };
 }

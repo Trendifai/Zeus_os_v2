@@ -120,7 +120,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="h-screen w-full bg-[#121316] text-[#e2e2e6] overflow-hidden flex items-stretch font-sans select-none">
+    <div className="h-screen w-full bg-[#121316] text-[#e2e2e6] overflow-hidden flex items-stretch font-sans">
 
       <aside
         style={{ width: isSidebarCollapsed ? '64px' : `${sidebarWidth}px` }}
