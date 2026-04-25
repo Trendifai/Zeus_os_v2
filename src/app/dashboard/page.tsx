@@ -181,9 +181,8 @@ export default function DashboardPage() {
               <div
                 key={tab}
                 onClick={() => setP1Active(tab)}
-                className={`flex items-center gap-2 px-4 h-full border-r border-zinc-800 cursor-pointer text-[10px] font-bold uppercase tracking-wider transition-all ${p1Active === tab ? 'text-amber-500 bg-zinc-800/20 border-b-2 border-amber-500' : 'text-zinc-500 hover:text-zinc-300'
-                  }`}
-              >
+                className={`flex items-center gap-2 px-4 h-full border-r border-zinc-800 cursor-pointer text-[10px] font-bold uppercase tracking-wider transition-all ${p1Active === tab ? 'text-amber-500 bg-zinc-800/20 border-b-2 border-amber-500' : 'text-zinc-500 hover:text-zinc-300'}`
+              }>
                 <span>{tab}</span>
                 <X size={12} className="hover:bg-zinc-800 rounded-full" onClick={(e) => { e.stopPropagation(); closeTab(1, tab); }} />
               </div>

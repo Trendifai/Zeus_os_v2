@@ -6,7 +6,7 @@ import { GripVertical, Plus } from 'lucide-react';
 export interface ContextTile {
   id: string;
   title: string;
-  type: 'crm' | 'produzione' | 'wiki' | 'empty';
+  type: 'crm' | 'produzione' | 'wiki' | 'contatti' | 'empty';
   colSpan?: number;
   rowSpan?: number;
 }
@@ -17,7 +17,7 @@ export interface GridItem {
 }
 
 const defaultTiles: ContextTile[] = [
-  { id: '1', title: 'CRM', type: 'crm' },
+   { id: '1', title: 'Contatti', type: 'contatti' },
   { id: '2', title: 'Produzione', type: 'produzione' },
   { id: '3', title: 'Wiki', type: 'wiki' },
 ];

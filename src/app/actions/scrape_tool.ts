@@ -13,7 +13,6 @@ function isValidUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     
-    // Block localhost and internal IPs
     const blocked = [
       'localhost',
       '127.0.0.1',
@@ -83,13 +82,11 @@ export async function scrapeUrl(
   options?: {
     maxLength?: number;
     timeout?: number;
-    logToFile?: boolean;
   }
 ): Promise<ScrapeResult> {
   const maxLength = options?.maxLength || 2000;
   const timeout = options?.timeout || 10000;
   
-  // Validate URL
   if (!isValidUrl(url)) {
     return {
       success: false,
@@ -121,7 +118,6 @@ export async function scrapeUrl(
     
     const html = await response.text();
     
-    // Check content type
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('html') && !contentType.includes('text')) {
       return {
@@ -131,14 +127,11 @@ export async function scrapeUrl(
       };
     }
     
-    // Extract title
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     const title = titleMatch ? titleMatch[1].trim() : new URL(url).hostname;
     
-    // Clean HTML
     let markdown = cleanHtml(html);
     
-    // Truncate if needed
     if (markdown.length > maxLength * 2) {
       markdown = markdown.slice(0, maxLength * 2) + '\n\n... [contenuto troncato]';
     }
@@ -162,37 +155,12 @@ export async function scrapeUrl(
       };
     }
     
-    if (error.includes('fetch') || error.includes('network')) {
-      return {
-        success: false,
-        error: 'Sito irraggiungibile o errore di connessione.',
-        url
-      };
-    }
-    
     return {
       success: false,
-      error,
+      error: error.includes('fetch') || error.includes('network') 
+        ? 'Sito irraggiungibile o errore di connessione.' 
+        : error,
       url
     };
-  }
-}
-
-// Utility: Extract URLs from text
-export function extractUrls(text: string): string[] {
-  const urlRegex = /https?:\/\/[^\s<>"]+/gi;
-  const matches = text.match(urlRegex) || [];
-  return [...new Set(matches)];
-}
-
-// Utility: Generate filename from URL
-export function urlToFilename(url: string): string {
-  try {
-    const parsed = new URL(url);
-    const hostname = parsed.hostname.replace(/^www\./, '').replace(/[^a-zA-Z0-9]/g, '-');
-    const path = parsed.pathname.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').slice(0, 30);
-    return path ? `${hostname}-${path}` : hostname;
-  } catch {
-    return 'scraped-content';
   }
 }

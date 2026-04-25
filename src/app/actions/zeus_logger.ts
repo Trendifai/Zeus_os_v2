@@ -5,7 +5,7 @@ const LOG_DIR = join(process.cwd(), 'src/wiki/log');
 const LOG_FILE = join(LOG_DIR, 'maintenance.md');
 
 export interface LogEntry {
-  timestamp: string;
+  timestamp?: string;
   action: string;
   status: 'success' | 'error' | 'info';
   details?: string;
