@@ -5,8 +5,9 @@ import {
   Database, Users, Receipt, Filter, X, TrendingUp,
   CreditCard, Clock, Send, Bolt, History, Settings,
   Columns, ExternalLink, ChevronLeft, ChevronRight, Plus,
-  Loader2
+  Loader2, Zap
 } from 'lucide-react';
+import Link from 'next/link';
 import { handleZeusCommand } from '@/app/actions/zeus';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -82,7 +83,7 @@ export default function DashboardPage() {
 
     try {
       const response = await handleZeusCommand(text);
-      
+
       if (response.success) {
         setZeusMessages(prev => [...prev, { role: 'assistant', content: response.output || 'Nessuna risposta' }]);
       } else {
@@ -167,6 +168,17 @@ export default function DashboardPage() {
           ))}
         </nav>
 
+        {/* Skill Hub Link */}
+        <div className="px-2 pb-4 mt-auto border-t border-zinc-800/40 pt-3">
+          <Link
+            href="/dashboard/skill-hub"
+            className="flex items-center gap-3 py-2 px-3 rounded cursor-pointer text-zinc-500 hover:bg-amber-500/10 hover:text-amber-500 transition-all"
+          >
+            <Zap size={18} />
+            {!isSidebarCollapsed && <span className="text-sm font-medium">Skill Hub</span>}
+          </Link>
+        </div>
+
         <div
           onMouseDown={() => { isResizingS.current = true; document.body.style.cursor = 'col-resize'; }}
           className="absolute right-0 top-0 w-1 h-full cursor-col-resize hover:bg-amber-500/50 z-50"
@@ -182,7 +194,7 @@ export default function DashboardPage() {
                 key={tab}
                 onClick={() => setP1Active(tab)}
                 className={`flex items-center gap-2 px-4 h-full border-r border-zinc-800 cursor-pointer text-[10px] font-bold uppercase tracking-wider transition-all ${p1Active === tab ? 'text-amber-500 bg-zinc-800/20 border-b-2 border-amber-500' : 'text-zinc-500 hover:text-zinc-300'}`
-              }>
+                }>
                 <span>{tab}</span>
                 <X size={12} className="hover:bg-zinc-800 rounded-full" onClick={(e) => { e.stopPropagation(); closeTab(1, tab); }} />
               </div>
@@ -249,11 +261,10 @@ export default function DashboardPage() {
           {zeusMessages.map((msg, idx) => (
             <div
               key={idx}
-              className={`rounded-lg px-3 py-2 text-xs leading-relaxed ${
-                msg.role === 'user'
-                  ? 'bg-zinc-800/60 text-zinc-300 ml-4'
-                  : 'bg-[#1e2023] border border-zinc-800 text-zinc-200 mr-2'
-              }`}
+              className={`rounded-lg px-3 py-2 text-xs leading-relaxed ${msg.role === 'user'
+                ? 'bg-zinc-800/60 text-zinc-300 ml-4'
+                : 'bg-[#1e2023] border border-zinc-800 text-zinc-200 mr-2'
+                }`}
             >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {msg.content}
