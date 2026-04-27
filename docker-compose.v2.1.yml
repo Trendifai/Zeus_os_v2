@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: zeus-graph-memory
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/manipura2026
+    volumes:
+      - ./volumes/neo4j/data:/data
+      - ./volumes/neo4j/logs:/logs
+
+  nemoclaw-harness:
+    build:
+      context: .
+      dockerfile: ./outil/nemoclaw/Dockerfile.harness
+    container_name: zeus-operational-agent
+    env_file: .env.local
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - CHROME_REMOTE_DEBUGGING_PORT=9222
+    ports:
+      - "9222:9222"

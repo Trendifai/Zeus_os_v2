@@ -1,0 +1,66 @@
+name: Zeus Agentia Browser Harness
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      intent:
+        description: 'Task Intent'
+        required: true
+        default: 'upload_reel'
+
+jobs:
+  harness-ops:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup API Keys
+        run: |
+          echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" > .env.local
+
+      - name: Infrastructure Bootstrap (From User Script)
+        run: |
+          # 1. Creazione directory per i nuovi volumi di memoria
+          mkdir -p ./volumes/neo4j/data ./volumes/neo4j/logs ./volumes/nemoclaw/scripts
+          
+          # 2. Update Docker Stack (Injecting Neo4j & Browser Harness service)
+          cat <<EOF > docker-compose.v2.1.yml
+          version: '3.8'
+          services:
+            neo4j:
+              image: neo4j:latest
+              container_name: zeus-graph-memory
+              ports:
+                - "7474:7474"
+                - "7687:7687"
+              environment:
+                - NEO4J_AUTH=neo4j/manipura2026
+              volumes:
+                - ./volumes/neo4j/data:/data
+                - ./volumes/neo4j/logs:/logs
+          
+            nemoclaw-harness:
+              build: 
+                context: .
+                dockerfile: ./outil/nemoclaw/Dockerfile.harness
+              container_name: zeus-operational-agent
+              env_file: .env.local
+              environment:
+                - OPENROUTER_API_KEY=\${OPENROUTER_API_KEY}
+                - CHROME_REMOTE_DEBUGGING_PORT=9222
+              ports:
+                - "9222:9222"
+          EOF
+          
+          # 3. Avvio dell'astronave cognitiva
+          docker compose -f docker-compose.v2.1.yml up -d
+
+      - name: Execute Logic
+        run: |
+          echo "Avvio riscaldamento motori (Wait 15s)..."
+          sleep 15
+          # Esecuzione del flow di test Browser Harness nel container
+          docker exec zeus-operational-agent npx ts-node /scripts/marketingTask.ts "${{ github.event.inputs.intent || 'upload_reel' }}"

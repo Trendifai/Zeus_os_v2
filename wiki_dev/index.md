@@ -1,0 +1,1 @@
+- [Workspace Architecture](pages/workspace_architecture.md) | Sistema multi-pane v3.1
